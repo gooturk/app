@@ -45,5 +45,10 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	 <!-- Permission options for the `camera` group -->
+    <key>NSCameraUsageDescription</key>
+    <string>camera required for object detection</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Storage permission is required for object detection.</string>
 </dict>
 </plist>
