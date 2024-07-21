@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:gooturk/playground.dart';
 import 'package:image_picker/image_picker.dart';
 import 'yolo_example.dart';
 
@@ -140,6 +141,34 @@ class _MyHomePageState extends State<MyHomePage> {
                     width: 1,
                   ),
                 ),
+                child: Column(children: [
+                  const Text('Go to Playground Page'),
+                  OutlinedButton(
+                    key: const Key('go_to_playground_page'),
+                    onPressed:
+                        // _incrementCounter,
+                        () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const PlaygroundWidget()),
+                      );
+                    },
+                    // tooltip: 'Go to Example',
+                    // child: const Icon(Icons.arrow_forward),
+                    child: const Text("Playground page"),
+                  ),
+                ]),
+              ),
+              Container(
+                width: getLength(width, 0.8),
+                height: getLength(height, 0.2),
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.primary,
+                    width: 1,
+                  ),
+                ),
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
@@ -175,6 +204,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     style: Theme.of(context).textTheme.headlineMedium,
                   ),
                   FloatingActionButton(
+                    heroTag: 'increment_icon_tag',
                     onPressed: _incrementCounter,
                     tooltip: 'Increment',
                     child: const Icon(Icons.add),
@@ -207,6 +237,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                     const Text('Switch Image'),
                     FloatingActionButton(
+                      heroTag: 'switch_image_tag',
                       key: const Key('switch_image'),
                       onPressed: _switchImage,
                       tooltip: 'Switch',
@@ -230,6 +261,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     const Text('for android, may require permission config'),
                     loadAssetImage(),
                     FloatingActionButton(
+                      heroTag: 'pick_image_tag',
                       key: const Key('pick_image'),
                       onPressed: _pickImage,
                       child: Icon(Icons.add_a_photo),
@@ -279,6 +311,7 @@ class _MyHomePageState extends State<MyHomePage> {
         children: [
           FloatingActionButton(
             key: const Key('yolo_run_icon'),
+            heroTag: 'run_icon_test',
             // onPressed: getData,
             onPressed: () {
               print("pressed run");
