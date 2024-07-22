@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:gooturk/playground.dart';
 import 'package:image_picker/image_picker.dart';
 import 'yolo_example.dart';
@@ -45,10 +46,12 @@ double getLength(double value, double ratio) {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  static const nativeChannel = MethodChannel('gooturk_native');
   int _counter = 0;
   bool _image = true;
   ImageProvider<Object> _centerImage = const AssetImage('assets/logo2.png');
   XFile? _imagePicked;
+  int? batteryState;
 
   @override
   void initState() {
@@ -323,6 +326,28 @@ class _MyHomePageState extends State<MyHomePage> {
             },
             tooltip: 'Run',
             child: const Icon(Icons.arrow_circle_right),
+          ),
+          FloatingActionButton(
+            key: const Key('debug_icon1'),
+            heroTag: 'debug_icon_test',
+            // onPressed: getData,
+            onPressed: () async {
+              print("Swift method called");
+              final res =
+                  await nativeChannel.invokeMethod<int>("getBatteryLevel", {
+                "arg1": 1,
+                "arg2": 2,
+              });
+              batteryState = res;
+              print("Recieved as ${res}");
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Battery Level: $batteryState%'),
+                ),
+              );
+            },
+            tooltip: 'Run',
+            child: const Icon(Icons.battery_5_bar_sharp),
           ),
         ],
       ),
