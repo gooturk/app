@@ -10,6 +10,7 @@ import 'package:ultralytics_yolo/predict/detect/object_detector.dart';
 import 'package:ultralytics_yolo/yolo_model.dart';
 
 class PlaygroundWidget extends StatefulWidget {
+  static String get routerName => '/playground';
   const PlaygroundWidget({super.key});
 
   @override
@@ -39,8 +40,10 @@ class _PlaygroundWidgetState extends State<PlaygroundWidget> {
     final file = File(path);
     if (!await file.exists()) {
       final byteData = await rootBundle.load(assetPath);
-      await file.writeAsBytes(byteData.buffer
-          .asUint8List(byteData.offsetInBytes, byteData.lengthInBytes));
+      await file.writeAsBytes(
+        byteData.buffer
+            .asUint8List(byteData.offsetInBytes, byteData.lengthInBytes),
+      );
     }
     return file.path;
   }
@@ -94,7 +97,7 @@ class _PlaygroundWidgetState extends State<PlaygroundWidget> {
         "width": width,
         "height": height,
         "conf": conf,
-        "label": label
+        "label": label,
       });
     }
     setState(() {

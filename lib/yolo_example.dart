@@ -173,8 +173,10 @@ class _ExampleWidgetState extends State<ExampleWidget> {
     final file = io.File(path);
     if (!await file.exists()) {
       final byteData = await rootBundle.load(assetPath);
-      await file.writeAsBytes(byteData.buffer
-          .asUint8List(byteData.offsetInBytes, byteData.lengthInBytes));
+      await file.writeAsBytes(
+        byteData.buffer
+            .asUint8List(byteData.offsetInBytes, byteData.lengthInBytes),
+      );
     }
     return file.path;
   }
@@ -194,12 +196,14 @@ class _ExampleWidgetState extends State<ExampleWidget> {
       try {
         Map<Permission, PermissionStatus> statuses =
             await permissions.request();
-        print("camera: " +
-            statuses[Permission.camera].toString() +
-            "\n storage: " +
-            statuses[Permission.storage].toString() +
-            "\n statuses: " +
-            statuses.toString());
+        print(
+          "camera: " +
+              statuses[Permission.camera].toString() +
+              "\n storage: " +
+              statuses[Permission.storage].toString() +
+              "\n statuses: " +
+              statuses.toString(),
+        );
         // if (await Permission.camera.isPermanentlyDenied) {
         //   // The user opted to never again see the permission request dialog for this
         //   // app. The only way to change the permission's status now is to let the
@@ -233,16 +237,17 @@ class Times extends StatelessWidget {
       child: Align(
         alignment: Alignment.bottomCenter,
         child: Container(
-            margin: const EdgeInsets.all(20),
-            padding: const EdgeInsets.all(20),
-            decoration: const BoxDecoration(
-              borderRadius: BorderRadius.all(Radius.circular(10)),
-              color: Colors.black54,
-            ),
-            child: Text(
-              '${(inferenceTime ?? 0).toStringAsFixed(1)} ms  -  ${(fpsRate ?? 0).toStringAsFixed(1)} FPS',
-              style: const TextStyle(color: Colors.white70),
-            )),
+          margin: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
+          decoration: const BoxDecoration(
+            borderRadius: BorderRadius.all(Radius.circular(10)),
+            color: Colors.black54,
+          ),
+          child: Text(
+            '${(inferenceTime ?? 0).toStringAsFixed(1)} ms  -  ${(fpsRate ?? 0).toStringAsFixed(1)} FPS',
+            style: const TextStyle(color: Colors.white70),
+          ),
+        ),
       ),
     );
   }

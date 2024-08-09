@@ -1,13 +1,98 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:gooturk/common/exception/custom_exception_handler.dart';
+import 'package:gooturk/common/provider/go_router_provider.dart';
 import 'package:gooturk/playground.dart';
 import 'package:image_picker/image_picker.dart';
 import 'yolo_example.dart';
+import 'package:logger/logger.dart' as log;
+
+var logger = log.Logger();
+
+class Logger extends ProviderObserver {
+  @override
+  void didUpdateProvider(
+    ProviderBase<Object?> provider,
+    Object? previousValue,
+    Object? newValue,
+    ProviderContainer container,
+  ) {
+    print('''
+{
+  "provider": "${provider.name ?? provider.runtimeType}",
+  "newValue": "$newValue"
+}''');
+  }
+}
 
 void main() {
-  runApp(const MyApp());
+  final container = ProviderContainer(observers: [Logger()]);
+  WidgetsFlutterBinding.ensureInitialized();
+
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+
+  SystemChrome.setSystemUIOverlayStyle(
+    SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      systemNavigationBarColor: Colors.grey[50],
+    ),
+  );
+
+  // final originalOnError = FlutterError.onError;
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    // originalOnError?.call(details);
+    CustomExceptionHandler.hanldeException(details.exception);
+  };
+
+  PlatformDispatcher.instance.onError = (error, stack) {
+    CustomExceptionHandler.hanldeException(error);
+    return true;
+  };
+
+  runApp(
+    UncontrolledProviderScope(
+      container: container,
+      child: _App(),
+    ),
+  );
+}
+
+class _App extends ConsumerWidget {
+  const _App();
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(goRouterProvider);
+    return ScreenUtilInit(
+      designSize: MediaQuery.of(context).size.height > 700
+          ? const Size(375, 812)
+          : MediaQuery.of(context).size.height > 550
+              ? const Size(375, 667)
+              : const Size(375, 500),
+      // scaleByHeight: MediaQuery.of(context).size.width > 450,
+      builder: (context, child) => MaterialApp.router(
+        routerConfig: router,
+        theme: ThemeData(
+          primarySwatch: Colors.deepOrange,
+          visualDensity: VisualDensity.adaptivePlatformDensity,
+        ),
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaleFactor: 1.0,
+          ),
+          child: child!,
+        ),
+      ),
+    );
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -106,12 +191,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Widget buildFutureData() {
     return FutureBuilder(
-        future: getDelayedData(),
-        builder: (context, snapshot) {
-          return snapshot.data == null
-              ? Text("Waiting for 20sec till data is available...")
-              : Text(snapshot.data!);
-        });
+      future: getDelayedData(),
+      builder: (context, snapshot) {
+        return snapshot.data == null
+            ? Text("Waiting for 20sec till data is available...")
+            : Text(snapshot.data!);
+      },
+    );
   }
 
   @override
@@ -144,24 +230,27 @@ class _MyHomePageState extends State<MyHomePage> {
                     width: 1,
                   ),
                 ),
-                child: Column(children: [
-                  const Text('Go to Playground Page'),
-                  OutlinedButton(
-                    key: const Key('go_to_playground_page'),
-                    onPressed:
-                        // _incrementCounter,
-                        () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const PlaygroundWidget()),
-                      );
-                    },
-                    // tooltip: 'Go to Example',
-                    // child: const Icon(Icons.arrow_forward),
-                    child: const Text("Playground page"),
-                  ),
-                ]),
+                child: Column(
+                  children: [
+                    const Text('Go to Playground Page'),
+                    OutlinedButton(
+                      key: const Key('go_to_playground_page'),
+                      onPressed:
+                          // _incrementCounter,
+                          () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const PlaygroundWidget(),
+                          ),
+                        );
+                      },
+                      // tooltip: 'Go to Example',
+                      // child: const Icon(Icons.arrow_forward),
+                      child: const Text("Playground page"),
+                    ),
+                  ],
+                ),
               ),
               Container(
                 width: getLength(width, 0.8),
@@ -198,21 +287,23 @@ class _MyHomePageState extends State<MyHomePage> {
                     width: 1,
                   ),
                 ),
-                child: Column(children: [
-                  const Text(
-                    'You have pushed the button this many times:',
-                  ),
-                  Text(
-                    '$_counter',
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
-                  FloatingActionButton(
-                    heroTag: 'increment_icon_tag',
-                    onPressed: _incrementCounter,
-                    tooltip: 'Increment',
-                    child: const Icon(Icons.add),
-                  ),
-                ]),
+                child: Column(
+                  children: [
+                    const Text(
+                      'You have pushed the button this many times:',
+                    ),
+                    Text(
+                      '$_counter',
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                    FloatingActionButton(
+                      heroTag: 'increment_icon_tag',
+                      onPressed: _incrementCounter,
+                      tooltip: 'Increment',
+                      child: const Icon(Icons.add),
+                    ),
+                  ],
+                ),
               ),
               Container(
                 width: getLength(width, 0.8),
@@ -224,29 +315,31 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ),
                 child: SingleChildScrollView(
-                  child: Column(children: [
-                    const Text(
-                      'Asset Image Test',
-                    ),
-                    Container(
-                      width: getLength(width, 0.4),
-                      height: getLength(width, 0.4),
-                      decoration: BoxDecoration(
-                        image: DecorationImage(
-                          image: _centerImage,
-                          fit: BoxFit.cover,
+                  child: Column(
+                    children: [
+                      const Text(
+                        'Asset Image Test',
+                      ),
+                      Container(
+                        width: getLength(width, 0.4),
+                        height: getLength(width, 0.4),
+                        decoration: BoxDecoration(
+                          image: DecorationImage(
+                            image: _centerImage,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
-                    ),
-                    const Text('Switch Image'),
-                    FloatingActionButton(
-                      heroTag: 'switch_image_tag',
-                      key: const Key('switch_image'),
-                      onPressed: _switchImage,
-                      tooltip: 'Switch',
-                      child: const Icon(Icons.swap_vert),
-                    ),
-                  ]),
+                      const Text('Switch Image'),
+                      FloatingActionButton(
+                        heroTag: 'switch_image_tag',
+                        key: const Key('switch_image'),
+                        onPressed: _switchImage,
+                        tooltip: 'Switch',
+                        child: const Icon(Icons.swap_vert),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               Container(
@@ -259,17 +352,19 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ),
                 child: SingleChildScrollView(
-                  child: Column(children: [
-                    const Text('Local Image load Test(for iOS)'),
-                    const Text('for android, may require permission config'),
-                    loadAssetImage(),
-                    FloatingActionButton(
-                      heroTag: 'pick_image_tag',
-                      key: const Key('pick_image'),
-                      onPressed: _pickImage,
-                      child: Icon(Icons.add_a_photo),
-                    ),
-                  ]),
+                  child: Column(
+                    children: [
+                      const Text('Local Image load Test(for iOS)'),
+                      const Text('for android, may require permission config'),
+                      loadAssetImage(),
+                      FloatingActionButton(
+                        heroTag: 'pick_image_tag',
+                        key: const Key('pick_image'),
+                        onPressed: _pickImage,
+                        child: Icon(Icons.add_a_photo),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               Container(
@@ -282,27 +377,31 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ),
                 child: SingleChildScrollView(
-                  child: Column(children: [
-                    const Text('Go to Yolo Camera View Page'),
-                    const Text('tested on iOS device O / Simulator X'),
-                    const Text(
-                        'android requires camera & storage permission config'),
-                    OutlinedButton(
-                      key: const Key('go_to_example_page'),
-                      onPressed:
-                          // _incrementCounter,
-                          () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const ExampleWidget()),
-                        );
-                      },
-                      // tooltip: 'Go to Example',
-                      // child: const Icon(Icons.arrow_forward),
-                      child: const Text("Yolo page"),
-                    ),
-                  ]),
+                  child: Column(
+                    children: [
+                      const Text('Go to Yolo Camera View Page'),
+                      const Text('tested on iOS device O / Simulator X'),
+                      const Text(
+                        'android requires camera & storage permission config',
+                      ),
+                      OutlinedButton(
+                        key: const Key('go_to_example_page'),
+                        onPressed:
+                            // _incrementCounter,
+                            () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ExampleWidget(),
+                            ),
+                          );
+                        },
+                        // tooltip: 'Go to Example',
+                        // child: const Icon(Icons.arrow_forward),
+                        child: const Text("Yolo page"),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -339,7 +438,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 "arg2": 2,
               });
               batteryState = res;
-              print("Recieved as ${res}");
+              print("Recieved as $res");
+              // ignore: use_build_context_synchronously
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('Battery Level: $batteryState%'),
