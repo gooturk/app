@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:gooturk/common/component/skeleton.dart';
 import 'package:gooturk/common/const/color.dart';
 import 'package:gooturk/common/const/data.dart';
-import 'package:gooturk/common/provider/go_router_provider.dart';
 import 'package:gooturk/common/style/default_font_style.dart';
-import 'package:skeletons/skeletons.dart';
+import 'package:gooturk/common/utils/utils.dart';
+import 'package:gooturk/hisotry/model/video_model.dart';
+import 'package:gooturk/hisotry/provider/video_provider.dart';
 
 class DefaultCardLayout extends StatelessWidget {
   final String id;
   final String name;
   final String? imgUrl;
+  final Widget? thumbnail;
   final Widget child;
   final Color borderColor;
   final bool isShadowVisible;
@@ -20,8 +24,9 @@ class DefaultCardLayout extends StatelessWidget {
   const DefaultCardLayout({
     required this.id,
     required this.name,
-    required this.imgUrl,
     required this.child,
+    this.thumbnail,
+    this.imgUrl,
     this.borderColor = PRIMARY_ORANGE,
     this.isShadowVisible = false,
     this.onTap,
@@ -41,14 +46,110 @@ class DefaultCardLayout extends StatelessWidget {
     );
   }
 
-  factory DefaultCardLayout.basic() {
+  factory DefaultCardLayout.fromVideoModel(VideoModel videoModel) {
     return DefaultCardLayout(
-      id: 'basic',
-      name: 'basic',
-      imgUrl: null,
+      id: videoModel.id,
+      name: videoModel.videoName,
       borderColor: Colors.transparent,
       isShadowVisible: true,
-      child: buildBasic(),
+      routerPath: '/analysis/${videoModel.videoName}',
+      thumbnail: FutureBuilder(
+        future: videoModel.videoThumbnail.thumbnailData,
+        builder: (context, snapshot) {
+          final data = snapshot.data;
+          if (snapshot.hasData && data != null) {
+            return Container(
+              width: 84.w,
+              height: 84.w,
+              color: Colors.black,
+              child: Image.memory(
+                width: 84.w,
+                height: 84.w,
+                data,
+                frameBuilder: ((context, child, frame, wasSynchronouslyLoaded) {
+                  if (wasSynchronouslyLoaded) return child;
+                  return AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: frame != null
+                        ? child
+                        : SizedBox(
+                            height: 84.w,
+                            width: 84.w,
+                            child: Skeleton(
+                              width: 84.w,
+                              height: 84.w,
+                            ),
+                          ),
+                  );
+                }),
+              ),
+            );
+          }
+          return Skeleton(
+            width: 84.w,
+            height: 84.w,
+          );
+        },
+      ),
+      child: SizedBox(
+        width: 200.w,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              videoModel.videoName,
+              style: defaultFontStyleBlack.copyWith(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w700,
+                height: 1.5,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Text(
+              Utils.getYYYYMMDDHHMMfromDateTimeWithKorean(
+                videoModel.createdAt,
+                showHHMM: true,
+              ),
+              style: defaultFontStyleBlack.copyWith(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w500,
+                color: TEXT_SUBTITLE_COLOR,
+              ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      Utils.getHHMMSSAmountfromDuration(
+                        videoModel.videoDuration,
+                      ),
+                      style: defaultFontStyleBlack.copyWith(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w500,
+                        color: TEXT_SUBTITLE_COLOR,
+                      ),
+                    ),
+                    Text(
+                      Utils.getFileSizeString(videoModel.videoSize),
+                      style: defaultFontStyleBlack.copyWith(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w500,
+                        color: TEXT_SUBTITLE_COLOR,
+                      ),
+                    ),
+                  ],
+                ),
+                DeleteButton(
+                  model: videoModel,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -84,67 +185,56 @@ class DefaultCardLayout extends StatelessWidget {
     } else {
       onTap = () => {context.push(routerPath!)};
     }
-    return Center(
-      child: GestureDetector(
-        onTap: this.onTap ?? onTap,
-        child: Padding(
-          padding: EdgeInsets.only(top: 8.h),
-          child: Container(
-            padding: EdgeInsets.all(16.w),
-            width: 335.w,
-            foregroundDecoration: isDisabled
-                ? BoxDecoration(
-                    color: Colors.black.withOpacity(0.7),
-                    backgroundBlendMode: BlendMode.saturation,
-                  )
-                : null,
-            decoration: ShapeDecoration(
-              shape: RoundedRectangleBorder(
-                side: BorderSide(width: 1.w, color: borderColor),
-                borderRadius: BorderRadius.circular(8),
+    return GestureDetector(
+      onTap: this.onTap ?? onTap,
+      child: Padding(
+        padding: EdgeInsets.only(top: 8.h),
+        child: Container(
+          padding: EdgeInsets.all(16.w),
+          width: 335.w,
+          foregroundDecoration: isDisabled
+              ? BoxDecoration(
+                  color: Colors.black.withOpacity(0.7),
+                  backgroundBlendMode: BlendMode.saturation,
+                )
+              : null,
+          decoration: ShapeDecoration(
+            shape: RoundedRectangleBorder(
+              side: BorderSide(width: 1.w, color: borderColor),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            color: Colors.white,
+            shadows: [
+              if (isShadowVisible)
+                const BoxShadow(
+                  color: Color(0x14000000),
+                  blurRadius: 10,
+                  offset: Offset(3, 3),
+                  spreadRadius: 0,
+                ),
+            ],
+          ),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(imgUrl != null ? 8 : 20),
+                child: thumbnail ??
+                    Image.network(
+                      imgUrl ?? defaultImg,
+                      width: 84.w,
+                      height: 84.w,
+                      fit: BoxFit.cover,
+                      frameBuilder:
+                          (context, child, frame, wasSynchronouslyLoaded) {
+                        return child;
+                      },
+                    ),
               ),
-              color: Colors.white,
-              shadows: [
-                if (isShadowVisible)
-                  const BoxShadow(
-                    color: Color(0x14000000),
-                    blurRadius: 10,
-                    offset: Offset(3, 3),
-                    spreadRadius: 0,
-                  ),
-              ],
-            ),
-            child: Row(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(imgUrl != null ? 8 : 20),
-                  child: Image.network(
-                    imgUrl ?? defaultImg,
-                    width: 84.w,
-                    height: 84.w,
-                    fit: BoxFit.cover,
-                    frameBuilder:
-                        (context, child, frame, wasSynchronouslyLoaded) {
-                      return Skeleton(
-                        isLoading: frame == null,
-                        skeleton: SkeletonAvatar(
-                          style: SkeletonAvatarStyle(
-                            width: 84.w,
-                            height: 84.w,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: child,
-                      );
-                    },
-                  ),
-                ),
-                SizedBox(
-                  width: 16.w,
-                ),
-                child,
-              ],
-            ),
+              SizedBox(
+                width: 16.w,
+              ),
+              child,
+            ],
           ),
         ),
       ),
@@ -152,98 +242,39 @@ class DefaultCardLayout extends StatelessWidget {
   }
 }
 
-Widget buildCafeInfo() {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        '12123',
-        style: defaultFontStyleBlack.copyWith(
-          fontSize: 14.sp,
-          fontWeight: FontWeight.w700,
-          height: 1.5,
-        ),
-      ),
-      Text(
-        '서울시 강남구 역삼동',
-        style: defaultFontStyleBlack.copyWith(
-          fontSize: 12.sp,
-          fontWeight: FontWeight.w500,
-          color: TEXT_SUBTITLE_COLOR,
-        ),
-      ),
-    ],
-  );
-}
-
 Widget buildSkeleton() {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      SkeletonLine(
-        style: SkeletonLineStyle(
-          height: 16.h,
-          width: 200.w,
-          borderRadius: BorderRadius.circular(8),
-        ),
+      Skeleton(
+        height: 16.h,
+        width: 200.w,
       ),
       SizedBox(
         height: 8.h,
       ),
-      SkeletonLine(
-        style: SkeletonLineStyle(
-          height: 16.h,
-          width: 100.w,
-          borderRadius: BorderRadius.circular(8),
-        ),
-      ),
-      SizedBox(
-        height: 12.h,
-      ),
-      SkeletonLine(
-        style: SkeletonLineStyle(
-          height: 24.h,
-          width: 100.w,
-          borderRadius: BorderRadius.circular(8),
-        ),
+      Skeleton(
+        height: 16.h,
+        width: 100.w,
       ),
     ],
   );
 }
 
-Widget buildBasic() {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        '다가오는 예약이 없어요 :(',
-        style: defaultFontStyleBlack.copyWith(
-          fontWeight: FontWeight.w500,
-        ),
+class DeleteButton extends ConsumerWidget {
+  final VideoModel model;
+  const DeleteButton({super.key, required this.model});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return IconButton(
+      onPressed: () {
+        ref.read(videoListProvider.notifier).deleteVideo(model);
+      },
+      icon: Icon(
+        Icons.delete,
+        color: Colors.red,
       ),
-      SizedBox(
-        height: 16.h,
-      ),
-      FilledButton(
-        onPressed: () {
-          rootNavigatorKey.currentContext!.push('/search');
-        },
-        style: ButtonStyle(
-          backgroundColor: MaterialStateProperty.all(
-            PRIMARY_YELLOW,
-          ),
-        ),
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: 10.w,
-            vertical: 6.h,
-          ),
-          child: Text(
-            '예약하러 가기!',
-            style: defaultFontStyleWhite,
-          ),
-        ),
-      ),
-    ],
-  );
+    );
+  }
 }

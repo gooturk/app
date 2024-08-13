@@ -39,10 +39,14 @@ class Utils {
     return "${dateTime.hour}시${dateTime.minute == 0 ? '' : ' ${dateTime.minute}분'}";
   }
 
-  static String getHHMMAmountfromDuration(Duration duration) {
+  static String getHHMMSSAmountfromDuration(Duration duration) {
+    final second = duration.inSeconds % 60;
+    if (duration.inMinutes == 0) {
+      return "$second초";
+    }
     final minute = duration.inMinutes % 60;
     if (duration.inHours == 0) {
-      return "$minute분";
+      return "$minute분${second == 0 ? '' : ' $second초'}";
     }
     return "${duration.inHours}시간${minute == 0 ? '' : ' $minute분'}";
   }
@@ -51,5 +55,15 @@ class Utils {
     int minutes = timeLeftInSeconds ~/ 60;
     int seconds = timeLeftInSeconds % 60;
     return "${minutes < 10 ? '0' : ''}$minutes : ${seconds < 10 ? '0' : ''}$seconds";
+  }
+
+  static String getFileSizeString(int size) {
+    if (size < 1024) {
+      return "${size}B";
+    } else if (size < 1024 * 1024) {
+      return "${(size / 1024).toStringAsFixed(1)}KB";
+    } else {
+      return "${(size / 1024 / 1024).toStringAsFixed(1)}MB";
+    }
   }
 }

@@ -14,8 +14,8 @@ class DefaultLayout extends StatelessWidget {
     this.title,
     this.titleWidget,
     this.bottomNavigationBar,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

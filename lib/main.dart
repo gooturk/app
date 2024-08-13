@@ -1,14 +1,18 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gooturk/common/exception/custom_exception_handler.dart';
 import 'package:gooturk/common/provider/go_router_provider.dart';
+import 'package:gooturk/common/provider/path_provider.dart';
 import 'package:gooturk/playground.dart';
+import 'package:gooturk/record/provider/camera_list_provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'yolo_example.dart';
 import 'package:logger/logger.dart' as log;
 
@@ -30,9 +34,17 @@ class Logger extends ProviderObserver {
   }
 }
 
-void main() {
+void main() async {
   final container = ProviderContainer(observers: [Logger()]);
   WidgetsFlutterBinding.ensureInitialized();
+
+  final cameras = await availableCameras();
+  container.read(cameraListProvider.notifier).initalize(cameras);
+  container.read(pathProvider.notifier).setPath(
+        Directory(
+          '${(await getApplicationDocumentsDirectory()).path}/camera/videos',
+        ),
+      );
 
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -77,7 +89,7 @@ class _App extends ConsumerWidget {
           : MediaQuery.of(context).size.height > 550
               ? const Size(375, 667)
               : const Size(375, 500),
-      // scaleByHeight: MediaQuery.of(context).size.width > 450,
+      scaleByHeight: MediaQuery.of(context).size.width > 450,
       builder: (context, child) => MaterialApp.router(
         routerConfig: router,
         theme: ThemeData(
