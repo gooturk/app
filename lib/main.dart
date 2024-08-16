@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gooturk/common/exception/custom_exception_handler.dart';
 import 'package:gooturk/common/provider/go_router_provider.dart';
+import 'package:gooturk/common/provider/method_channel_provider.dart';
 import 'package:gooturk/common/provider/path_provider.dart';
 import 'package:gooturk/playground.dart';
 import 'package:gooturk/record/provider/camera_list_provider.dart';
@@ -45,6 +46,7 @@ void main() async {
           '${(await getApplicationDocumentsDirectory()).path}/camera/videos',
         ),
       );
+  await container.read(methodChannelProvider.notifier).initMethodChannel();
 
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,

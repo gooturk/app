@@ -155,3 +155,17 @@ class NotMatchedException extends CustomException {
           ),
         );
 }
+
+class MethodChannelException extends CustomException {
+  MethodChannelException()
+      : super(
+          message: 'MethodChannel이 초기화되지 않았습니다.',
+          dialogModel: CustomDialogModel(
+            title: 'MethodChannel 오류',
+            description: 'MethodChannel이 초기화되지 않았습니다.',
+            customButtonModel: CustomButtonModel(
+              title: '확인',
+            ),
+          ),
+        );
+}
