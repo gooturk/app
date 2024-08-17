@@ -11,8 +11,8 @@ import UIKit
     
     let controller : FlutterViewController = window?.rootViewController as! FlutterViewController
     let gooturkChannel = FlutterMethodChannel(name: "gooturk_native", binaryMessenger: controller.binaryMessenger)
-      let methodHandler = GooturkMethodCallHandler()
-      gooturkChannel.setMethodCallHandler(methodHandler.handle)
+    let methodHandler = GooturkMethodCallHandler()
+    gooturkChannel.setMethodCallHandler(methodHandler.handle)
     
     GeneratedPluginRegistrant.register(with: self)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)

@@ -76,6 +76,7 @@ flutter:
     # - images/a_dot_burr.jpeg
     # - images/a_dot_ham.jpeg
     - assets/yolov8n.mlmodel
+    - assets/yolov8x-worldv2.mlmodel
     - assets/logo1.png
     - assets/logo2.png
 

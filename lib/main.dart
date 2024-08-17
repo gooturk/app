@@ -46,7 +46,6 @@ void main() async {
           '${(await getApplicationDocumentsDirectory()).path}/camera/videos',
         ),
       );
-  await container.read(methodChannelProvider.notifier).initMethodChannel();
 
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -199,7 +198,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<String> getDelayedData() async {
-    await Future.delayed(const Duration(seconds: 20));
+    await Future.delayed(const Duration(seconds: 10));
     return "Data: Hello World!";
   }
 
@@ -287,7 +286,14 @@ class _MyHomePageState extends State<MyHomePage> {
                       const Text(
                         'Data initialized once on build:',
                       ),
-                      buildFutureData(),
+                      FutureBuilder(
+                          future: getDelayedData(),
+                          builder: (context, snapshot) {
+                            return snapshot.data == null
+                                ? Text(
+                                    "Waiting for 20sec till data is available...")
+                                : Text(snapshot.data!);
+                          }),
                     ],
                   ),
                 ),
@@ -432,7 +438,7 @@ class _MyHomePageState extends State<MyHomePage> {
             onPressed: () {
               print("pressed run");
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
+                const SnackBar(
                   content: Text('Hello World!'),
                 ),
               );

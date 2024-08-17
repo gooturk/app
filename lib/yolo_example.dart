@@ -123,23 +123,22 @@ class _ExampleWidgetState extends State<ExampleWidget> {
   }
 
   Future<ObjectDetector> _initObjectDetectorWithLocalModel() async {
-    // final modelPath = await _copy('assets/yolov8n.mlmodel');
-    // final model = LocalYoloModel(
-    //   id: '',
-    //   task: Task.detect,
-    //   format: Format.coreml,
-    //   modelPath: modelPath,
-    // );
     final modelPath = await _copy('assets/yolov8n.mlmodel');
-    // final modelPath = await _copy('assets/yolov8n_int8.tflite');
-    // final metadataPath = await _copy('assets/metadata.yaml');
     final model = LocalYoloModel(
       id: '',
       task: Task.detect,
-      format: Format.tflite,
+      format: Format.coreml,
       modelPath: modelPath,
-      // metadataPath: metadataPath,
     );
+    // final modelPath = await _copy('assets/yolov8n_int8.tflite');
+    // final metadataPath = await _copy('assets/metadata.yaml');
+    // final model = LocalYoloModel(
+    //   id: '',
+    //   task: Task.detect,
+    //   format: Format.tflite,
+    //   modelPath: modelPath,
+    //   metadataPath: metadataPath,
+    // );
 
     return ObjectDetector(model: model);
   }
