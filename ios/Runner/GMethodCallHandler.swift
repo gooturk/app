@@ -8,9 +8,13 @@ class GooturkMethodCallHandler{
     private var screenSize: CGSize?
     private var screenOrientation: UIDeviceOrientation?
     private var createdAt: Date?
+    private var configml: MLModelConfiguration?
+    private var mlfeature: ThresholdProvider?
     
     public init() {
         createdAt = Date()
+        configml = MLModelConfiguration()
+        configml!.computeUnits = .all
     }
 
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -81,7 +85,9 @@ class GooturkMethodCallHandler{
         }
         if (detector == nil){
             do {
+                mlfeature = ThresholdProvider(iouThreshold: 0.4, confidenceThreshold: 0.05)
                 detector = try VNCoreMLModel(for: myYoloWorldModel!)
+                detector!.featureProvider = mlfeature
             }
             catch{
                 print(error)
@@ -104,65 +110,33 @@ class GooturkMethodCallHandler{
     public func detectImage(args: [String: Any],result: @escaping FlutterResult) async -> Void  {
         let imagePath = args["imagePath"] as! String
         let img_metadata = try! Data(contentsOf: URL(fileURLWithPath: imagePath))
-        let requestHandler = VNImageRequestHandler(ciImage: CIImage(data: img_metadata)!, options: [:])
+        let img = CIImage(data: img_metadata)
+        let requestHandler = VNImageRequestHandler(ciImage: img!, options: [:])
         let request = VNCoreMLRequest(model: detector!)
+        request.imageCropAndScaleOption = .scaleFill
         
         let bounds: CGRect = await UIScreen.main.bounds
         screenSize = CGSize(width: bounds.width, height: bounds.height)
         let screenOrientation = await UIDevice.current.orientation
+        let w = img?.extent.width
+        let h = img?.extent.height
 
         var recognitions: [[String:Any]] = []
         do {
             try requestHandler.perform([request])
             if let results = request.results as? [VNRecognizedObjectObservation] {
-                let width = self.screenSize?.width ?? 375
-                let height = self.screenSize?.height ?? 816
-                let ratio: CGFloat = (height / width) / (4.0 / 3.0)
                 for i in 0...(results.count-1) {
                         let prediction = results[i]
-                        
                         var rect = prediction.boundingBox
-                        switch screenOrientation {
-                        case .portraitUpsideDown:
-                            rect = CGRect(x: 1.0 - rect.origin.x - rect.width,
-                                          y: 1.0 - rect.origin.y - rect.height,
-                                          width: rect.width,
-                                          height: rect.height)
-                        case .landscapeLeft:
-                            rect = CGRect(x: rect.origin.y,
-                                          y: 1.0 - rect.origin.x - rect.width,
-                                          width: rect.height,
-                                          height: rect.width)
-                        case .landscapeRight:
-                            rect = CGRect(x: 1.0 - rect.origin.y - rect.height,
-                                          y: rect.origin.x,
-                                          width: rect.height,
-                                          height: rect.width)
-                        case .unknown:
-                            fallthrough
-                        default: break
-                        }
-                        if ratio >= 1 { // iPhone ratio = 1.218
-                            let offset = (1 - ratio) * (0.5 - rect.minX)
-                            let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: offset, y: -1)
-                            rect = rect.applying(transform)
-                            rect.size.width *= ratio
-                        } else { // iPad ratio = 0.75
-                            let offset = (ratio - 1) * (0.5 - rect.maxY)
-                            let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: 0, y: offset - 1)
-                            rect = rect.applying(transform)
-                            rect.size.height /= ratio
-                        }
-                        rect = VNImageRectForNormalizedRect(rect, Int(width), Int(height))
-
+                    print("\(i+1): origin\(rect.origin.x), \(rect.origin.y) / \(rect.width), \(rect.height)  ")
                         let label = prediction.labels[0].identifier
                         let confidence = prediction.labels[0].confidence
                         recognitions.append(["label": label,
                                              "confidence": confidence,
-                                             "x": rect.origin.x,
-                                             "y": rect.origin.y,
-                                             "width": rect.size.width,
-                                             "height": rect.size.height])
+                                             "x": rect.origin.x * w!,
+                                             "y": (1 - rect.origin.y) * h!,
+                                             "width": rect.size.width * w!,
+                                             "height": rect.size.height * h!])
                 }
             }
         } catch {
@@ -172,3 +146,24 @@ class GooturkMethodCallHandler{
         return
     }
 }
+
+public class ThresholdProvider: MLFeatureProvider {
+    var values = [
+        "iouThreshold": MLFeatureValue(double: 0.4),
+        "confidenceThreshold": MLFeatureValue(double: 0.01)
+    ]
+
+    public var featureNames: Set<String> {
+        return Set(values.keys)
+    }
+
+    init(iouThreshold: Double = 0.4, confidenceThreshold: Double = 0.01) {
+        self.values["iouThreshold"] = MLFeatureValue(double: iouThreshold)
+        self.values["confidenceThreshold"] = MLFeatureValue(double: confidenceThreshold)
+    }
+
+    public func featureValue(for featureName: String) -> MLFeatureValue? {
+        return values[featureName]
+    }
+}
+

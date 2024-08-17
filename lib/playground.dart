@@ -14,7 +14,6 @@ class GDetectedObject {
     required this.label,
   });
 
-  /// Creates a [GDetectedObject] from a [json] object.
   factory GDetectedObject.fromJson(Map<dynamic, dynamic> json) {
     return GDetectedObject(
       confidence: json['confidence'] as double,
@@ -27,14 +26,8 @@ class GDetectedObject {
       label: json['label'] as String,
     );
   }
-
-  /// The confidence of the detection.
   final double confidence;
-
-  /// The bounding box of the detection.
   final Rect boundingBox;
-
-  /// The label of the detection.
   final String label;
 }
 
@@ -87,24 +80,20 @@ class _PlaygroundWidgetState extends ConsumerState<PlaygroundWidget> {
 
   void loadModel() async {
     final modelPath = await _copy(modell_path);
-    print('calling switft.. with path: $modell_path \n $modelPath');
+    print('calling switft.. with path: $modell_path');
     final res = await methodChannel.invokeMethod<bool>("loadModel", {
       "model": modelPath,
-      "arg2": 2,
     });
     print('from switft: $res');
   }
 
   void debugg() async {
     print('calling switft.. bar');
-    final res = await methodChannel.invokeMethod<bool>("debug", {
-      "arg2": 2,
-    });
+    final res = await methodChannel.invokeMethod<bool>("debug");
     print('from switft: Done $res');
   }
 
   Future<List<GDetectedObject>> inference() async {
-    print('calling switft.. inference');
     final start = DateTime.now();
     final res =
         await methodChannel.invokeMethod<List<Object?>>("inferenceImage", {
@@ -117,13 +106,11 @@ class _PlaygroundWidgetState extends ConsumerState<PlaygroundWidget> {
 
     res?.forEach((json) {
       json = Map<String, dynamic>.from(json as Map);
-      if (json == null) return;
-      objects.add(GDetectedObject.fromJson(json as Map));
+      objects.add(GDetectedObject.fromJson(json));
     });
     final end = DateTime.now();
     final elapsed = end.difference(start);
     elapsed_time = elapsed.inMilliseconds;
-    print('from switft: ${objects.length} found in $elapsed_time msec');
 
     detect_results.clear();
     for (final obj in objects) {
